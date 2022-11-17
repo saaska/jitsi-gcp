@@ -5,16 +5,14 @@ echo SETUP: Updating all apt packages...>> /var/log/setup-jitsi.log
 sudo apt-get update 
 echo SETUP: Updated apt packages>> /var/log/setup-jitsi.log
 
-echo SETUP: Get dynamic DNS update script, run it, and add to run at startup>> /var/log/setup-jitsi.log
+echo SETUP: Installing pip>> /var/log/setup-jitsi.log
 sudo apt-get -y -q -q install python3-pip 			# Install pip3 for python dependencies
 echo SETUP: Installed pip>> /var/log/setup-jitsi.log
+echo SETUP: Installing Cloud DNS client pacjage>> /var/log/setup-jitsi.log
 pip3 install google-cloud-dns  		# Install DNS resolver and GCP Cloud DNS libraries
 echo SETUP: Installed Google Cloud DNS package for Python>> /var/log/setup-jitsi.log
-sudo curl -s "https://gist.githubusercontent.com/saaska/2815148e66b1a1cc0b7d6901770b5246/raw/dd8b782a5e3ad3f0a468f376ae0634702f136ddf/gcp-renew-dns.py" \
-	-o /usr/local/bin/gcp-renew-dns.py >>/var/log/setup-jitsi.log 2>&1  	# Download python script from a specified repository
-echo SETUP: Got DNS Update Script>> /var/log/setup-jitsi.log
-echo SETUP: Running Update Script...>> /var/log/setup-jitsi.log
-python3 /usr/local/bin/gcp-renew-dns.py>>/var/log/setup-jitsi.log 2>&1		# Run the script.
+echo SETUP: Running DNS Update Script...>> /var/log/setup-jitsi.log
+python3 ./gcp-renew-dns.py>> /var/log/setup-jitsi.log 2>&1		# Run the script.
 echo SETUP: Ran DNS Update Script>> /var/log/setup-jitsi.log
 if grep -e "@reboot python3 /usr/local/bin/gcp-renew-dns" /etc/crontab; then
     echo '@reboot python3 /usr/local/bin/gcp-renew-dns.py &'>> /etc/crontab # Configure cron to run the script at start-up.
@@ -35,14 +33,17 @@ echo SETUP: Updated Docker package info>> /var/log/setup-jitsi.log
 sudo apt-get -y -q install docker-ce docker-ce-cli containerd.io docker-compose>>/var/log/setup-jitsi.log 2>&1
 echo SETUP: Installed Docker packages>> /var/log/setup-jitsi.log
 
-# Get jitsi
-sudo apt-get -y -q install wget unzip>>/var/log/setup-jitsi.log 2>&1
-echo SETUP: Installed wget and unzip>> /var/log/setup-jitsi.log
-wget --no-verbose https://github.com/jitsi/docker-jitsi-meet/archive/refs/tags/stable-7882.zip -O /tmp/jitsi-docker.zip>>/var/log/setup-jitsi.log 2>&1
-echo SETUP: Downloaded jitsi-docker release ZIP>> /var/log/setup-jitsi.log
-sudo unzip /tmp/jitsi-docker.zip -d /opt/jitsi-docker
-echo SETUP: Unpacked jitsi-docker release ZIP>> /var/log/setup-jitsi.log
-rm /tmp/jitsi-docker.zip
+# Get jitsi-docker
+LATEST_JITSI_DOCKER=$(curl -s https://api.github.com/repos/jitsi/docker-jitsi-meet/tags | grep "tarball_url" | grep -Eo 'https://[^\"]*'| head -1)
+echo SETUP: Downloading $LATEST_JITSI_DOCKER>> /var/log/setup-jitsi.log
+mkdir docker-jitsi-meet
+curl -sL $LATEST_JITSI_DOCKER | tar xz -C docker-jitsi-meet
+echo SETUP: Downloaded latest docker-jitsi-meet release>> /var/log/setup-jitsi.log
+mv docker-jitsi-meet/* /usr/share/jitsi
+
+# Install Google Cloud Ops Agent for monitoring
+curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
+echo SETUP: Installed Google Cloud Ops Agent>> /var/log/setup-jitsi.log
 
 # Get Let's encrypt SSL keys
 sudo apt-get -y -q install jq  # install JSON processor for the keys obtained from secrets
