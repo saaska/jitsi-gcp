@@ -54,7 +54,7 @@ HOSTNAME=demo
 DOMAIN=saaska.me
 FULLCHAINSECRET=demo-fullchain-pem
 KEYSECRET=demo-key-pem
-SERVICE_ACC=jitsi-service-account2@${$GCP_PROJECT}.iam.gserviceaccount.com
+SERVICE_ACC=jitsi-service-account2@${GCP_PROJECT}.iam.gserviceaccount.com
 
 gcloud compute instances create jitsi-demo-instance --project=$GCP_PROJECT \
      --zone=$REGIONZONE --machine-type=e2-standard-2 \

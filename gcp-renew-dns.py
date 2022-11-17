@@ -64,7 +64,7 @@ ttl = 60  # TTL for hostname DNS Records = 1 minute
 if old_ip and old_ip != new_ip:
     # Remove the old DNS record
     record1 = zone.resource_record_set(HOSTNAME, 'A', old_ttl, [old_ip])
-    changes = zone.changes()tl = 
+    changes = zone.changes()
     changes.delete_record_set(record1)
     changes.create()
     changes.reload()

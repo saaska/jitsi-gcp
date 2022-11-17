@@ -8,7 +8,7 @@ echo SETUP: Updated apt packages>> /var/log/setup-jitsi.log
 echo SETUP: Installing pip>> /var/log/setup-jitsi.log
 sudo apt-get -y -q -q install python3-pip 			# Install pip3 for python dependencies
 echo SETUP: Installed pip>> /var/log/setup-jitsi.log
-echo SETUP: Installing Cloud DNS client pacjage>> /var/log/setup-jitsi.log
+echo SETUP: Installing Cloud DNS client package>> /var/log/setup-jitsi.log
 pip3 install google-cloud-dns  		# Install DNS resolver and GCP Cloud DNS libraries
 echo SETUP: Installed Google Cloud DNS package for Python>> /var/log/setup-jitsi.log
 echo SETUP: Running DNS Update Script...>> /var/log/setup-jitsi.log
@@ -78,4 +78,5 @@ echo SETUP: Configured Jitsi>> /var/log/setup-jitsi.log
 # start Jitsi
 sudo docker-compose up -d
 echo SETUP: Launched Jitsi>> /var/log/setup-jitsi.log
+echo SETUP: Done.>> /var/log/setup-jitsi.log
 date>> /var/log/setup-jitsi.log
