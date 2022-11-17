@@ -54,14 +54,12 @@ HOSTNAME=demo
 DOMAIN=saaska.me
 FULLCHAINSECRET=demo-fullchain-pem
 KEYSECRET=demo-key-pem
-SERVICE_ACC=jitsi-service-account2@${GCP_PROJECT}.iam.gserviceaccount.com
+SERVICE_ACC=jitsi-service-account@${GCP_PROJECT}.iam.gserviceaccount.com
 
 gcloud compute instances create jitsi-demo-instance --project=$GCP_PROJECT \
      --zone=$REGIONZONE --machine-type=e2-standard-2 \
      --network-interface=network-tier=PREMIUM,subnet=default \
-     --metadata=domain=$DOMAIN,fullchainsecret=$FULLCHAINSECRET,\
-       hostname=$HOSTNAME,keysecret=$KEYSECRET,zone=$DNSZONE,\
-       startup-script=\#\!/bin/bash$'\n'sudo\ apt-get\ update$'\n'sudo\ apt-get\ install\ -y\ git$'\n'cd\ /tmp$'\n'git\ clone\ https://github.com/saaska/jitsi-gcp$'\n'cd\ jitsi-gcp$'\n'bash\ setup-jitsi-instance.sh \
+     --metadata=domain=$DOMAIN,fullchainsecret=$FULLCHAINSECRET,hostname=$HOSTNAME,keysecret=$KEYSECRET,zone=$DNSZONE,startup-script=\#\!/bin/bash$'\n'sudo\ apt-get\ update$'\n'sudo\ apt-get\ install\ -y\ git$'\n'cd\ /tmp$'\n'git\ clone\ https://github.com/saaska/jitsi-gcp$'\n'cd\ jitsi-gcp$'\n'bash\ setup-jitsi-instance.sh \
      --no-restart-on-failure --maintenance-policy=TERMINATE --preemptible \
      --provisioning-model=SPOT --instance-termination-action=STOP \
      --service-account=$SERVICE_ACC \
