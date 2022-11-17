@@ -10,6 +10,7 @@ Clients send media to a Jitsi server through WebRTC, which needs SSL, so you nee
 1. DNS Config and service account permissions
 2. Upload SSL certificates into [Secret Manager](https://console.cloud.google.com/security/secret-manager), note their names
 3. Configure firewall rules to let Jitsi connections in
+4. Create and run the instance
 
 ## 1. DNS Config and service account permissions
 
@@ -40,4 +41,33 @@ The two files we need are the server private key and the full certification chai
 We will use two network tags, `jitsi` and `jibri` for our instances. To create firewall rules to allow instances tagged in this way to receive connections, you can use gcloud:
 ```bash
 gcloud compute firewall-rules create allow-jitsi --allow=tcp:80,tcp:443,tcp:4443,tcp:5349,udp:10000,udp:3478 --target-tags=jitsi
+```
+
+## 4. Create and run the instance
+```bash
+# Change these vars if needed 
+REGIONZONE=europe-west3-c
+GCP_PROJECT=$(gcloud config get project)
+MACHINETYPE=e2-standard-2
+DNSZONE=saaska-zone
+HOSTNAME=demo
+DOMAIN=saaska.me
+FULLCHAINSECRET=demo-fullchain-pem
+KEYSECRET=demo-key-pem
+SERVICE_ACC=jitsi-service-account2@${$GCP_PROJECT}.iam.gserviceaccount.com
+
+gcloud compute instances create jitsi-demo-instance --project=$GCP_PROJECT \
+     --zone=$REGIONZONE --machine-type=e2-standard-2 \
+     --network-interface=network-tier=PREMIUM,subnet=default \
+     --metadata=domain=$DOMAIN,fullchainsecret=$FULLCHAINSECRET,\
+       hostname=$HOSTNAME,keysecret=$KEYSECRET,zone=$DNSZONE,\
+       startup-script=\#\!/bin/bash$'\n'sudo\ apt-get\ update$'\n'sudo\ apt-get\ install\ -y\ git$'\n'cd\ /tmp$'\n'git\ clone\ https://github.com/saaska/jitsi-gcp$'\n'cd\ jitsi-gcp$'\n'bash\ setup-jitsi-instance.sh \
+     --no-restart-on-failure --maintenance-policy=TERMINATE --preemptible \
+     --provisioning-model=SPOT --instance-termination-action=STOP \
+     --service-account=$SERVICE_ACC \
+     --scopes=https://www.googleapis.com/auth/cloud-platform \
+     --tags=jitsi,http-server,https-server \
+     --create-disk=auto-delete=yes,boot=yes,device-name=demo-instance,image=projects/debian-cloud/global/images/debian-11-bullseye-v20221102,mode=rw,size=10,type=projects/jitsi-demos/zones/$REGIONZONE/diskTypes/pd-balanced \
+     --no-shielded-secure-boot --shielded-vtpm --shielded-integrity-monitoring \
+     --reservation-affinity=any
 ```
