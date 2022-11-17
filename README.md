@@ -11,4 +11,16 @@ The first thing is to register a domain and create a zone in [Google Cloud DNS](
 
 To be able to do that, VM service account needs to have a DNS Administrator role. 
 
-
+If you have `jq` installed where you run gcloud (GCP Cloud shell does), run
+```bash
+export GCP_PROJECT=$(gcloud config get project)
+export SERVICE_ACC=$(gcloud iam service-accounts create jitsi-service-account \
+    --display-name="Jitsi Service Account" \
+    --format=json | jq -r ".email")
+gcloud projects add-iam-policy-binding $GCP_PROJECT\
+    --member=serviceAccount:${SERVICE_ACC} --role=roles/dns.admin
+gcloud projects add-iam-policy-binding $GCP_PROJECT\
+    --member=serviceAccount:${SERVICE_ACC} --role=roles/monitoring.metricWriter
+gcloud projects add-iam-policy-binding $GCP_PROJECT\
+    --member=serviceAccount:${SERVICE_ACC} --role=roles/secretmanager.secretAccessor
+```
