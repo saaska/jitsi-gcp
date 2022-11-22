@@ -91,7 +91,9 @@ containers or from Debian/Ubuntu packages.
 
 The Jitsi project provides docker containers for its backend projects meant to
 be run together using `docker-compose`. The upside is that it packages all
-the dependencies neatly. The downside is that the configuration files
+the dependencies neatly. The downside is the small extra level of indirection.
+
+at the configuration files
 reside inside the containers, usually in `/config`, and you have to go inside
 the container to modify them. A few most important ones are passed as
 environment variables by `docker-compose` from the file `.env`, so if no
@@ -114,7 +116,7 @@ INSTANCE_NAME=jitsi-demo-instance
 FULLCHAINSECRET=jitsi-example-com-fullchain-pem
 KEYSECRET=jitsi-example-com-key-pem
 SERVICE_ACC=jitsi-service-account@${GCP_PROJECT}.iam.gserviceaccount.com
-SPOT=1# remove this line if spot instance is not desired
+SPOT=1 # remove this line if spot instance is not desired
 
 gcloud compute instances create $INSTANCE_NAME --project=$GCP_PROJECT \
      --zone=$REGIONZONE --machine-type=e2-standard-2 \
@@ -131,9 +133,14 @@ gcloud compute instances create $INSTANCE_NAME --project=$GCP_PROJECT \
 ```
 
 This will create an instance with a service account having necessary
-permissions, a network tag to open necessary ports, update the host DNS
+permissions, a network tag to open necessary ports, and clone this repo.
+From there the `setup-jitsi-instance.sh` script will update the host DNS
 record, retrive SSL certs, install Docker, download, setup and run the Jitsi
 containers.
+
+Everyting downloaded and installed by the script will be root-owned.
+
+The logs of the setup process will be in the file `/var/log/setup-jitsi.log`.
 
 
 # 5. Ops Agent
@@ -147,3 +154,7 @@ Execute this right after Step 4 in the same shell:
 ```
 
 ![Compute > Instances > Instance details > Observability](./pics/instance-observability.png)
+
+# Enjoy
+![Your very own Jitsi Meet](./pics/your-own-jitsi-meet.png)
+
