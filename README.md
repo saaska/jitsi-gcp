@@ -1,11 +1,13 @@
 # jitsi-gcp
 Scripts and stuff to run a Jitsi installation in Google Cloud
 
-[Jitsi](https://github.com/jitsi/) is a set of projects for a Zoom/Google Meet-like videoconferencing. It has a React client that can run in browser and as a mobile app through React Native, and a set of server systems. The former are available free for public use at https://meet.jit.si, as-a-service commercially, or can be run independently.
+[Jitsi](https://github.com/jitsi/) is Zoom/Google Meet-like videoconferencing. It has a web client that can run in browser, and a mobile app (through React Native). The backend consists of several server systems, which are running free for public use at https://meet.jit.si, as-a-service commercially, or can be run independently.
 
-This repo contains script I used to run my own Jitsi installation on Google Cloud Platform.
+This repo contains scripts I used to run my own Jitsi Meet installation on Google Cloud Platform.
 
-Clients send media to a Jitsi server through WebRTC, which needs SSL, so you need a domain name and SSL certificates for it. 
+Clients send media to a Jitsi server through WebRTC, which needs HTTPS. Self-signed SSL certificates work with web clients, but not with mobile. So it's better to have a domain name and real SSL certificates for it. 
+
+To roll your own Jitsi on Google Cloud, these steps need to be taken before running the scripts, explained below:
 
 1. DNS Config and service account permissions
 2. Upload SSL certificates into [Secret Manager](https://console.cloud.google.com/security/secret-manager), note their names
@@ -14,23 +16,24 @@ Clients send media to a Jitsi server through WebRTC, which needs SSL, so you nee
 
 ## 1. DNS Config and service account permissions
 
-The first thing is to register a domain and create a zone in [Google Cloud DNS](https://console.cloud.google.com/net-services/dns/zones) to manage the domain names. For experimentation, VMs may often be created and deleted, spot instances that can be stopped at any time can be used to save costs. So [gcp_renew-dns.py](./gcp_renew-dns.py) is a script that, when run from inside a VM instance, will renew a given DNS name to point to that instance's current IP address. 
+The first thing is to register a domain and create a zone in [Google Cloud DNS](https://console.cloud.google.com/net-services/dns/zones) to manage the domain names. For experimentation, VMs may often be created and deleted. Also, to save costs, you can use spot instances that can be stopped at any time. So [gcp_renew-dns.py](./gcp_renew-dns.py) is a script that, when run from inside a VM instance, will renew a given DNS name to point to that instance's current IP address. It is cheaper than purchasing a static public IP address. 
 
-To be able to do that, VM service account needs to have a DNS Administrator role. 
+To be able to do that, the VM service account needs to have a DNS Administrator role. 
 
-If you have `jq` installed where you run gcloud (GCP Cloud shell does), run
+If you have `jq` installed where you run gcloud (GCP Cloud shell does), to give the service accounts necessary role grants, run 
 ```bash
 export GCP_PROJECT=$(gcloud config get project)
 export SERVICE_ACC=$(gcloud iam service-accounts create jitsi-service-account \
     --display-name="Jitsi Service Account" \
     --format=json | jq -r ".email")
 gcloud projects add-iam-policy-binding $GCP_PROJECT\
-    --member=serviceAccount:${SERVICE_ACC} --role=roles/dns.admin
+    --member=serviceAccount:${SERVICE_ACC} --role=roles/dns.admin #1
 gcloud projects add-iam-policy-binding $GCP_PROJECT\
-    --member=serviceAccount:${SERVICE_ACC} --role=roles/monitoring.metricWriter
+    --member=serviceAccount:${SERVICE_ACC} --role=roles/monitoring.metricWriter #2
 gcloud projects add-iam-policy-binding $GCP_PROJECT\
-    --member=serviceAccount:${SERVICE_ACC} --role=roles/secretmanager.secretAccessor
+    --member=serviceAccount:${SERVICE_ACC} --role=roles/secretmanager.secretAccessor #3
 ```
+These are permissions to 1) change DNS records, 2) to report performance metrics through Google Cloud Ops agent for dashboards etc, and 3) to access SSL certificates through secrets.
 
 ## 2. Upload SSL certificates to GCP's Secret Manager
 
