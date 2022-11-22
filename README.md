@@ -84,11 +84,12 @@ gcloud compute firewall-rules create allow-jitsi \
 Make sure you have no higher-priority rules blocking the same ports.
 
 
-## 4. Create and run the instance
+## 4A. Create and run the instance (Dockerized setup)
 
 Change the vars at the start of command as desired, pay special attention to
-the secret names for SSL stuff create st Step 2. Run where you have `gcloud` 
+the secret names for SSL stuff create st Step 2. Run this `gcloud` command 
 _after selecting the default project_.
+
 ```bash
 # Change these vars if needed 
 REGIONZONE=europe-west3-c
@@ -117,7 +118,11 @@ gcloud compute instances create $INSTANCE_NAME --project=$GCP_PROJECT \
      --reservation-affinity=any
 ```
 
-If you want to run the Ops Agent to display nice graphs right on the instance page or in the logs, run
+If you want to run the Ops Agent to display nice graphs right on the instance
+page or in the logs, execute this right afterwards
+
 ```bash
 :> agents_to_install.csv && echo '"projects/$GCP_PROJECT/zones/$REGIONZONE/instances/$INSTANCE_NAME","[{""type"":""ops-agent""}]"' >> agents_to_install.csv && curl -sSO https://dl.google.com/cloudagents/mass-provision-google-cloud-ops-agents.py && python3 mass-provision-google-cloud-ops-agents.py --file agents_to_install.csv
 ```
+
+![Compute > Instances > Instance details > Observability](./pics/instance-observability.png)
