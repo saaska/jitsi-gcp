@@ -57,27 +57,32 @@ These are permissions to 1) change DNS records, 2) to report performance
 metrics through Google Cloud Ops agent for dashboards etc, and 3) to access
 SSL certificates through secrets.
 
+
 ## 2. Upload SSL certificates to GCP's Secret Manager
 
 The two files we need are the server private key and the full certification
 chain file. In a Let's Encrypt-supplied certificate archive (as of November
 2022) they are called `<HOSTNAME>/key.pem` and `<HOSTNAME>/fullchain.pem`.
-Upload them to the [Secret Manager]
-(https://console.cloud.google.com/security/secret-manager) and record their
-names, you will need them.
+Upload them to the [Secret Manager](https://console.cloud.google.com/security/secret-manager) and 
+record their names, you will need them.
+
+![Secret Manager](./pics/secret-manager.png)
 
 
 ## 3. Configure firewall rules
 
-We will use two network tags, `jitsi` and `jibri` for our instances. To create
-firewall rules to allow instances tagged in this way to receive connections,
-you can use gcloud:
+We will use the tags `jitsi` for our instances. The gcloud command to create
+firewall rule to allow connections on necessary ports for instances tagged 
+in this way is:
 
 ```bash
 gcloud compute firewall-rules create allow-jitsi \
        --allow=tcp:80,tcp:443,tcp:4443,tcp:5349,udp:10000,udp:3478 \
        --target-tags=jitsi
 ```
+
+Make sure you have no higher-priority rules blocking the same ports.
+
 
 ## 4. Create and run the instance
 
@@ -92,12 +97,13 @@ MACHINETYPE=e2-standard-2
 DNSZONE=example-zone
 HOSTNAME=jitsi
 DOMAIN=example.com
+INSTANCE_NAME=jitsi-demo-instance
 FULLCHAINSECRET=jitsi-example-com-fullchain-pem
 KEYSECRET=jitsi-example-com-key-pem
 SERVICE_ACC=jitsi-service-account@${GCP_PROJECT}.iam.gserviceaccount.com
 SPOT=1# remove this line if spot instance is not desired
 
-gcloud compute instances create jitsi-demo-instance --project=$GCP_PROJECT \
+gcloud compute instances create $INSTANCE_NAME --project=$GCP_PROJECT \
      --zone=$REGIONZONE --machine-type=e2-standard-2 \
      --network-interface=network-tier=PREMIUM,subnet=default \
      --metadata=domain=$DOMAIN,fullchainsecret=$FULLCHAINSECRET,hostname=$HOSTNAME,keysecret=$KEYSECRET,zone=$DNSZONE,startup-script=\#\!/bin/bash$'\n'sudo\ apt-get\ update$'\n'sudo\ apt-get\ install\ -y\ git$'\n'cd\ /tmp$'\n'git\ clone\ https://github.com/saaska/jitsi-gcp$'\n'cd\ jitsi-gcp$'\n'bash\ setup-jitsi-instance.sh \
@@ -109,4 +115,9 @@ gcloud compute instances create jitsi-demo-instance --project=$GCP_PROJECT \
      --create-disk=auto-delete=yes,boot=yes,device-name=demo-instance,image=projects/debian-cloud/global/images/debian-11-bullseye-v20221102,mode=rw,size=10,type=projects/jitsi-demos/zones/$REGIONZONE/diskTypes/pd-balanced \
      --no-shielded-secure-boot --shielded-vtpm --shielded-integrity-monitoring \
      --reservation-affinity=any
+```
+
+If you want to run the Ops Agent to display nice graphs right on the instance page or in the logs, run
+```bash
+:> agents_to_install.csv && echo '"projects/$GCP_PROJECT/zones/$REGIONZONE/instances/$INSTANCE_NAME","[{""type"":""ops-agent""}]"' >> agents_to_install.csv && curl -sSO https://dl.google.com/cloudagents/mass-provision-google-cloud-ops-agents.py && python3 mass-provision-google-cloud-ops-agents.py --file agents_to_install.csv
 ```
