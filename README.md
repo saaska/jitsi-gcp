@@ -83,11 +83,23 @@ gcloud compute firewall-rules create allow-jitsi \
 
 Make sure you have no higher-priority rules blocking the same ports.
 
+There are at least two easy options for installing Jitsi: from Docker
+containers or from Debian/Ubuntu packages.
+
 
 ## 4A. Create and run the instance (Dockerized setup)
 
-Change the vars at the start of command as desired, pay special attention to
-the secret names for SSL stuff create st Step 2. Run this `gcloud` command 
+The Jitsi project provides docker containers for its backend projects meant to
+be run together using `docker-compose`. The upside is that it packages all
+the dependencies neatly. The downside is that the configuration files
+reside inside the containers, usually in `/config`, and you have to go inside
+the container to modify them. A few most important ones are passed as
+environment variables by `docker-compose` from the file `.env`, so if no
+further customizations are wanted, this is not a problem.
+
+To create the instance with containerized Jitsi setup, change the vars at the
+start of command as desired, pay special attention to the names of the
+secrets for SSL stuff created at Step 2. And run this `gcloud` command 
 _after selecting the default project_.
 
 ```bash
@@ -118,8 +130,17 @@ gcloud compute instances create $INSTANCE_NAME --project=$GCP_PROJECT \
      --reservation-affinity=any
 ```
 
-If you want to run the Ops Agent to display nice graphs right on the instance
-page or in the logs, execute this right afterwards
+This will create an instance with a service account having necessary
+permissions, a network tag to open necessary ports, update the host DNS
+record, retrive SSL certs, install Docker, download, setup and run the Jitsi
+containers.
+
+
+# 5. Ops Agent
+
+If you want performance monitoring, for example, nice graphs right on the instance
+page, Google Cloud Ops Agent needs to be installed on the VM. 
+Execute this right after Step 4 in the same shell:
 
 ```bash
 :> agents_to_install.csv && echo '"projects/$GCP_PROJECT/zones/$REGIONZONE/instances/$INSTANCE_NAME","[{""type"":""ops-agent""}]"' >> agents_to_install.csv && curl -sSO https://dl.google.com/cloudagents/mass-provision-google-cloud-ops-agents.py && python3 mass-provision-google-cloud-ops-agents.py --file agents_to_install.csv
