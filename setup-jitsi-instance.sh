@@ -1,4 +1,5 @@
 #!/bin/bash
+{
 echo SETUP: Working in $PWD as $(whois)
 
 echo SETUP: Updating all apt packages...
@@ -100,3 +101,4 @@ echo SETUP: Launching Jitsi
 sudo docker-compose up -d
 echo SETUP: Done.
 date
+} >> /var/log/setup-jitsi.log 2>&1
