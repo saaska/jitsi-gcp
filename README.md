@@ -121,7 +121,7 @@ SPOT=1 # remove this line if spot instance is not desired
 gcloud compute instances create $INSTANCE_NAME --project=$GCP_PROJECT \
      --zone=$REGIONZONE --machine-type=e2-standard-2 \
      --network-interface=network-tier=PREMIUM,subnet=default \
-     --metadata=domain=$DOMAIN,fullchainsecret=$FULLCHAINSECRET,hostname=$HOSTNAME,keysecret=$KEYSECRET,zone=$DNSZONE,startup-script=\#\!/bin/bash$'\n'sudo\ apt-get\ update$'\n'sudo\ apt-get\ install\ -y\ git$'\n'git\ clone\ https://github.com/saaska/jitsi-gcp\ /tmp/jitsi-gcp$'\n'bash\ /tmp/jitsi-gcp/setup-jitsi-instance.sh\ \>\>\ /var/log/setup-jitsi.log\ 1\>\&2
+     --metadata=domain=$DOMAIN,fullchainsecret=$FULLCHAINSECRET,hostname=$HOSTNAME,keysecret=$KEYSECRET,zone=$DNSZONE,startup-script=\#\!/bin/bash$'\n'sudo\ apt-get\ update$'\n'sudo\ apt-get\ install\ -y\ git$'\n'git\ clone\ https://github.com/saaska/jitsi-gcp\ /tmp/jitsi-gcp$'\n'cd\ /tmp/jitsi-gcp$'\n'bash\ ./setup-jitsi-instance.sh
      --no-restart-on-failure --maintenance-policy=TERMINATE $([ "$SPOT" = "1" ] && echo --preemptible || echo "") \
      --provisioning-model=$([ "$SPOT" = "1" ] && echo SPOT || echo STANDARD) --instance-termination-action=STOP \
      --service-account=$SERVICE_ACC \
