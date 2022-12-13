@@ -1,5 +1,7 @@
 #!/bin/bash
 {
+export DEBIAN_FRONTEND=noninteractive
+
 JITSI_DIR=/usr/share/jitsi
 JITSI_USER=jitsi
 JITSI_GROUP=jitsi
@@ -25,7 +27,7 @@ echo SETUP: Updated apt packages
 
 # Install pip3 for python dependencies
 echo SETUP: Installing pip...
-sudo apt-get -y -q -q install python3-pip
+sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install python3-pip
 
 echo SETUP: Installing Cloud DNS client package...
 pip3 install google-cloud-dns requests
@@ -42,17 +44,18 @@ if grep -e "@reboot python3 /usr/local/bin/gcp-renew-dns.py" /etc/crontab; then
 fi
 echo SETUP: Cron DNS update setup step complete
 
+mkdir $JITSI_DIR
 
 install_ops_agent() {
    # Install Google Cloud Ops Agent for monitoring
    curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
-   echo SETUP: Installed Google Cloud Ops Agent
    sudo bash add-google-cloud-ops-agent-repo.sh --also-install
+   echo SETUP: Installed Google Cloud Ops Agent
 }
 
 install_ssl_keys() {
    # Get Let's encrypt SSL keys
-   sudo apt-get -y -q install jq  # install JSON processor for the keys obtained from secrets
+   sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install jq  # install JSON processor for the keys obtained from secrets
    mkdir $JITSI_DIR/certs
    chmod 700 $JITSI_DIR/certs
    TOKEN=$(gcloud auth print-access-token)
@@ -78,7 +81,7 @@ install_jitsi_docker() {
    sudo apt-get update
    echo SETUP: Updated Docker package info
    # install docker packages
-   sudo apt-get -y -q install docker-ce docker-ce-cli containerd.io docker-compose
+   sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install docker-ce docker-ce-cli containerd.io docker-compose
    echo SETUP: Installed Docker packages
 
    # Add jitsi user to docker group
