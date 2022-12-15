@@ -73,24 +73,30 @@ install_jitsi_debian() {
    sudo extrepo enable jitsi-stable
    sudo apt-get update  
    sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install apt-transport-https nginx-full prosody openjdk-11-jre debconf-utils
-   sudo hostnamectl set-hostname demo.saaska.me
+   sudo hostnamectl set-hostname $HOSTNAME.$DOMAIN
    sudo cat <<EOF > /etc/systemd/system.conf
 DefaultTasksMax=65535
 DefaultLimitNPROC=65000
 EOF
    sudo systemctl daemon-reload
    cat <<EOF | sudo debconf-set-selections
-jitsi-meet-web-config   jitsi-meet/cert-choice  select  I want to use my own certificate
-jitsi-meet-web-config   jitsi-meet/cert-path-key        string  /etc/ssl/$HOSTNAME.$DOMAIN.key
-jitsi-meet-web-config   jitsi-meet/cert-path-crt        string  /etc/ssl/$HOSTNAME.$DOMAIN.crt
-jitsi-meet-web-config   jitsi-meet/jaas-choice  boolean false
-jitsi-meet-web-config   jitsi-meet/jvb-hostname string  $HOSTNAME.$DOMAIN
-jitsi-meet-prosody      jitsi-meet-prosody/jvb-hostname string  $HOSTNAME.$DOMAIN
-jitsi-meet-turnserver   jitsi-meet-turnserver/jvb-hostname      string  $HOSTNAME.$DOMAIN
-jicofo  jitsi-videobridge/jvb-hostname  string  $HOSTNAME.$DOMAIN
-jitsi-meet-turnserver   jitsi-videobridge/jvb-hostname  string  $HOSTNAME.$DOMAIN
-jitsi-meet-web-config   jitsi-videobridge/jvb-hostname  string  $HOSTNAME.$DOMAIN
-jitsi-videobridge2      jitsi-videobridge/jvb-hostname  string  $HOSTNAME.$DOMAIN
+# The domain of the current installation (e.g. meet.jitsi.com):
+jitsi-videobridge2   jitsi-videobridge/jvb-hostname   string   $HOSTNAME.$DOMAIN
+jitsi-meet-turnserver   jitsi-meet-turnserver/jvb-hostname  string   $HOSTNAME.$DOMAIN
+jitsi-meet-turnserver   jitsi-videobridge/jvb-hostname   string   $HOSTNAME.$DOMAIN
+jicofo   jitsi-videobridge/jvb-hostname   string   $HOSTNAME.$DOMAIN
+jitsi-meet-prosody   jitsi-videobridge/jvb-hostname   string   $HOSTNAME.$DOMAIN
+jitsi-meet-prosody   jitsi-meet-prosody/jvb-hostname  string   $HOSTNAME.$DOMAIN
+jitsi-meet-web-config   jitsi-videobridge/jvb-hostname   string   $HOSTNAME.$DOMAIN
+jitsi-meet-web-config   jitsi-meet/jvb-hostname string   $HOSTNAME.$DOMAIN
+# Choices: Let's Encrypt certificates, I want to use my own certificate, Generate a new self-signed certificate
+jitsi-meet-web-config   jitsi-meet/cert-choice  select   I want to use my own certificate
+# Full local server path to the SSL key file:
+jitsi-meet-web-config   jitsi-meet/cert-path-key   string   /etc/ssl/$HOSTNAME.$DOMAIN.key
+# Full local server path to the SSL certificate file:
+jitsi-meet-web-config   jitsi-meet/cert-path-crt   string   /etc/ssl/$HOSTNAME.$DOMAIN.crt
+# Add telephony to your Jitsi meetings?
+jitsi-meet-web-config   jitsi-meet/jaas-choice  boolean  false
 EOF
 
    # jitsi-meet installation
