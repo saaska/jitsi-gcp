@@ -74,7 +74,7 @@ install_jitsi_debian() {
    sudo apt-get update  
    sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install apt-transport-https nginx-full prosody openjdk-11-jre debconf-utils
    sudo hostnamectl set-hostname demo.saaska.me
-   sudo cat cat <<EOF > /etc/systemd/system.conf
+   sudo cat <<EOF > /etc/systemd/system.conf
 DefaultTasksMax=65535
 DefaultLimitNPROC=65000
 EOF
