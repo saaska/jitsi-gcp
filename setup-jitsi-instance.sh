@@ -54,19 +54,47 @@ install_ops_agent() {
 }
 
 install_ssl_keys() {
-   # Get Let's encrypt SSL keys
+   # Get the SSL keys
    sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install jq  # install JSON processor for the keys obtained from secrets
-   mkdir $JITSI_DIR/certs
-   chmod 700 $JITSI_DIR/certs
    TOKEN=$(gcloud auth print-access-token)
    curl -s https://secretmanager.googleapis.com/v1/projects/$PROJECT_ID/secrets/$KEY_SECRET_NAME/versions/latest:access  \
       --request "GET" --header "authorization: Bearer $TOKEN" --header "content-type: application/json" --silent \
-      | jq -r ".payload.data" | base64 --decode | tee $JITSI_DIR/certs/key.pem > /dev/null
+      | jq -r ".payload.data" | base64 --decode | sudo tee /etc/ssl/$HOSTNAME.$DOMAIN.key > /dev/null
    curl -s https://secretmanager.googleapis.com/v1/projects/$PROJECT_ID/secrets/$FULLCHAIN_SECRET_NAME/versions/latest:access  \
       --request "GET" --header "authorization: Bearer $TOKEN" --header "content-type: application/json" --silent \
-      | jq -r ".payload.data" | base64 --decode | tee $JITSI_DIR/certs/fullchain.pem > /dev/null
-   chmod 400 $JITSI_DIR/certs/*
+      | jq -r ".payload.data" | base64 --decode | sudo tee /etc/ssl/$HOSTNAME.$DOMAIN.crt > /dev/null
+   sudo chmod 400 /etc/ssl/$HOSTNAME.$DOMAIN.key /etc/ssl/$HOSTNAME.$DOMAIN.crt
    echo SETUP: Retrieved SSL certificates
+}
+
+install_jitsi_debian() {
+   sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install extrepo
+   sudo extrepo enable prosody
+   sudo extrepo enable jitsi-stable
+   sudo apt-get update  
+   sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install apt-transport-https nginx-full prosody openjdk-11-jre
+   sudo hostnamectl set-hostname demo.saaska.me
+   sudo cat cat <<EOF > /etc/systemd/system.conf
+DefaultTasksMax=65535
+DefaultLimitNPROC=65000
+EOF
+   sudo systemctl daemon-reload
+   cat <<EOF | sudo debconf-set-selections
+jitsi-meet-web-config   jitsi-meet/cert-choice  select  I want to use my own certificate
+jitsi-meet-web-config   jitsi-meet/cert-path-key        string  /etc/ssl/$HOSTNAME.$DOMAIN.key
+jitsi-meet-web-config   jitsi-meet/cert-path-crt        string  /etc/ssl/$HOSTNAME.$DOMAIN.crt
+jitsi-meet-web-config   jitsi-meet/jaas-choice  boolean false
+jitsi-meet-web-config   jitsi-meet/jvb-hostname string  $HOSTNAME.$DOMAIN
+jitsi-meet-prosody      jitsi-meet-prosody/jvb-hostname string  $HOSTNAME.$DOMAIN
+jitsi-meet-turnserver   jitsi-meet-turnserver/jvb-hostname      string  $HOSTNAME.$DOMAIN
+jicofo  jitsi-videobridge/jvb-hostname  string  $HOSTNAME.$DOMAIN
+jitsi-meet-turnserver   jitsi-videobridge/jvb-hostname  string  $HOSTNAME.$DOMAIN
+jitsi-meet-web-config   jitsi-videobridge/jvb-hostname  string  $HOSTNAME.$DOMAIN
+jitsi-videobridge2      jitsi-videobridge/jvb-hostname  string  $HOSTNAME.$DOMAIN
+EOF
+
+   # jitsi-meet installation
+   sudo apt install jitsi-meet
 }
 
 install_jitsi_docker() {
@@ -106,7 +134,7 @@ install_jitsi_docker() {
    # generate passwords
    ./gen-passwords.sh
    # Add cert path mapping
-   sed -i -e "1,/prosody:/ s%volumes:%volumes:\n            - $JITSI_DIR/certs/fullchain.pem:/config/keys/cert.crt\n            - $JITSI_DIR/certs/key.pem:/config/keys/cert.key%" docker-compose.yml
+   sed -i -e "1,/prosody:/ s%volumes:%volumes:\n            - /etc/ssl/$HOSTNAME.$DOMAIN.crt:/config/keys/cert.crt\n            - /etc/ssl/$HOSTNAME.$DOMAIN.key:/config/keys/cert.key%" docker-compose.yml
    echo SETUP: Configured Jitsi
    # make dirs for config files
    sudo mkdir -p $JITSI_DIR/config/{web,transcripts,prosody/config,prosody/prosody-plugins-custom,jicofo,jvb,jigasi,jibri}
