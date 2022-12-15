@@ -127,7 +127,7 @@ gcloud compute instances create $INSTANCE_NAME --project=$GCP_PROJECT \
      --service-account=$SERVICE_ACC \
      --scopes=https://www.googleapis.com/auth/cloud-platform \
      --tags=jitsi,http-server,https-server \
-     --create-disk=auto-delete=yes,boot=yes,device-name=demo-instance,image=projects/debian-cloud/global/images/debian-11-bullseye-v20221102,mode=rw,size=10,type=projects/jitsi-demos/zones/$REGIONZONE/diskTypes/pd-balanced \
+     --create-disk=auto-delete=yes,boot=yes,device-name=demo-instance,image-project=debian-cloud,image-family=debian-11,mode=rw,size=10,type=projects/jitsi-demos/zones/$REGIONZONE/diskTypes/pd-balanced \
      --no-shielded-secure-boot --shielded-vtpm --shielded-integrity-monitoring \
      --reservation-affinity=any
 ```
