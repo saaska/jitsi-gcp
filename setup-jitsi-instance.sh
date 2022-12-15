@@ -147,7 +147,7 @@ install_jitsi_docker() {
 
 install_ops_agent
 install_ssl_keys
-install_jitsi_docker
+install_jitsi_debian
 
 echo SETUP: Done.
 date
