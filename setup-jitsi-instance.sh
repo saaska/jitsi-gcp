@@ -72,7 +72,7 @@ install_jitsi_debian() {
    sudo extrepo enable prosody
    sudo extrepo enable jitsi-stable
    sudo apt-get update  
-   sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install apt-transport-https nginx-full prosody openjdk-11-jre
+   sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install apt-transport-https nginx-full prosody openjdk-11-jre debconf-utils
    sudo hostnamectl set-hostname demo.saaska.me
    sudo cat cat <<EOF > /etc/systemd/system.conf
 DefaultTasksMax=65535
@@ -94,7 +94,7 @@ jitsi-videobridge2      jitsi-videobridge/jvb-hostname  string  $HOSTNAME.$DOMAI
 EOF
 
    # jitsi-meet installation
-   sudo apt install jitsi-meet
+   sudo apt-get install -y jitsi-meet
 }
 
 install_jitsi_docker() {
