@@ -74,7 +74,7 @@ install_jitsi_debian() {
    sudo apt-get update  
    sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install apt-transport-https nginx-full prosody openjdk-11-jre debconf-utils
    sudo hostnamectl set-hostname $HOSTNAME.$DOMAIN
-   sudo cat <<EOF > /etc/systemd/system.conf
+   sudo cat <<EOF | sudo tee -a /etc/systemd/system.conf > /dev/null
 DefaultTasksMax=65535
 DefaultLimitNPROC=65000
 EOF
@@ -124,7 +124,6 @@ install_jitsi_docker() {
    # Get jitsi-docker from GitHub Releases
    LATEST_JITSI_DOCKER=$(curl -s https://api.github.com/repos/jitsi/docker-jitsi-meet/tags | grep "tarball_url" | grep -Eo 'https://[^\"]*'| head -1)
    echo SETUP: Downloading $LATEST_JITSI_DOCKER
-   mkdir $JITSI_DIR
    chown $JITSI_GROUP:$JITSI_USER $JITSI_DIR
    curl -sL $LATEST_JITSI_DOCKER | runuser -u jitsi tar xzC $JITSI_DIR
    echo SETUP: Downloaded latest docker-jitsi-meet release
@@ -153,7 +152,7 @@ install_jitsi_docker() {
 
 install_ops_agent
 install_ssl_keys
-install_jitsi_docker
+# install_jitsi_docker
 
 echo SETUP: Done.
 date
