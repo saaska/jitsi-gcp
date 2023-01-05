@@ -59,11 +59,11 @@ install_ssl_keys() {
    TOKEN=$(gcloud auth print-access-token)
    curl -s https://secretmanager.googleapis.com/v1/projects/$PROJECT_ID/secrets/$KEY_SECRET_NAME/versions/latest:access  \
       --request "GET" --header "authorization: Bearer $TOKEN" --header "content-type: application/json" --silent \
-      | jq -r ".payload.data" | base64 --decode | sudo tee /etc/ssl/$HOSTNAME.$DOMAIN.key > /dev/null
+      | jq -r ".payload.data" | base64 --decode | sudo tee /etc/ssl/$HOSTNAME.$DOMAIN.key.pem > /dev/null
    curl -s https://secretmanager.googleapis.com/v1/projects/$PROJECT_ID/secrets/$FULLCHAIN_SECRET_NAME/versions/latest:access  \
       --request "GET" --header "authorization: Bearer $TOKEN" --header "content-type: application/json" --silent \
-      | jq -r ".payload.data" | base64 --decode | sudo tee /etc/ssl/$HOSTNAME.$DOMAIN.crt > /dev/null
-   sudo chmod 400 /etc/ssl/$HOSTNAME.$DOMAIN.key /etc/ssl/$HOSTNAME.$DOMAIN.crt
+      | jq -r ".payload.data" | base64 --decode | sudo tee /etc/ssl/$HOSTNAME.$DOMAIN.fullchain.pem > /dev/null
+   sudo chmod 400 /etc/ssl/$HOSTNAME.$DOMAIN.key.pem /etc/ssl/$HOSTNAME.$DOMAIN.fullchain.pem
    echo SETUP: Retrieved SSL certificates
 }
 
@@ -92,9 +92,9 @@ jitsi-meet-web-config   jitsi-meet/jvb-hostname string   $HOSTNAME.$DOMAIN
 # Choices: Let's Encrypt certificates, I want to use my own certificate, Generate a new self-signed certificate
 jitsi-meet-web-config   jitsi-meet/cert-choice  select   I want to use my own certificate
 # Full local server path to the SSL key file:
-jitsi-meet-web-config   jitsi-meet/cert-path-key   string   /etc/ssl/$HOSTNAME.$DOMAIN.key
+jitsi-meet-web-config   jitsi-meet/cert-path-key   string   /etc/ssl/$HOSTNAME.$DOMAIN.key.pem
 # Full local server path to the SSL certificate file:
-jitsi-meet-web-config   jitsi-meet/cert-path-crt   string   /etc/ssl/$HOSTNAME.$DOMAIN.crt
+jitsi-meet-web-config   jitsi-meet/cert-path-crt   string   /etc/ssl/$HOSTNAME.$DOMAIN.fullchain.pem
 # Add telephony to your Jitsi meetings?
 jitsi-meet-web-config   jitsi-meet/jaas-choice  boolean  false
 EOF
@@ -139,7 +139,7 @@ install_jitsi_docker() {
    # generate passwords
    ./gen-passwords.sh
    # Add cert path mapping
-   sed -i -e "1,/prosody:/ s%volumes:%volumes:\n            - /etc/ssl/$HOSTNAME.$DOMAIN.crt:/config/keys/cert.crt\n            - /etc/ssl/$HOSTNAME.$DOMAIN.key:/config/keys/cert.key%" docker-compose.yml
+   sed -i -e "1,/prosody:/ s%volumes:%volumes:\n            - /etc/ssl/$HOSTNAME.$DOMAIN.fullchain.pem:/config/keys/cert.crt\n            - /etc/ssl/$HOSTNAME.$DOMAIN.key.pem:/config/keys/cert.key%" docker-compose.yml
    echo SETUP: Configured Jitsi
    # make dirs for config files
    sudo mkdir -p $JITSI_DIR/config/{web,transcripts,prosody/config,prosody/prosody-plugins-custom,jicofo,jvb,jigasi,jibri}
