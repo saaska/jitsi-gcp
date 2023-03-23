@@ -22,15 +22,15 @@ KEY_SECRET_NAME=$(curl -s "$META_URL/instance/attributes/keysecret" -H "$META_HE
 FULLCHAIN_SECRET_NAME=$(curl -s "$META_URL/instance/attributes/fullchainsecret" -H "$META_HEADER")
 
 echo SETUP: Adding user and group...
-sudo groupadd -r $JITSI_GROUP && sudo useradd -r -s /bin/false -g $JITSI_GROUP $JITSI_USER
+groupadd -r $JITSI_GROUP && useradd -r -s /bin/false -g $JITSI_GROUP $JITSI_USER
 
 echo SETUP: Updating all apt packages...
-sudo apt-get update 
+apt-get update 
 echo SETUP: Updated apt packages
 
 # Install pip3 for python dependencies
 echo SETUP: Installing pip...
-sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install python3-pip
+DEBIAN_FRONTEND=noninteractive apt-get -qq install python3-pip
 
 echo SETUP: Installing Cloud DNS client package...
 pip3 install google-cloud-dns requests
@@ -53,13 +53,13 @@ mkdir $JITSI_DIR
 install_ops_agent() {
     # Install Google Cloud Ops Agent for monitoring
     curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
-    sudo bash add-google-cloud-ops-agent-repo.sh --also-install
+    bash add-google-cloud-ops-agent-repo.sh --also-install
     echo SETUP: Installed Google Cloud Ops Agent
 }
 
 install_ssl_keys() {
     # Get the SSL keys
-    sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install jq  # install JSON processor for the keys obtained from secrets
+    DEBIAN_FRONTEND=noninteractive apt-get -qq install jq  # install JSON processor for the keys obtained from secrets
     TOKEN=$(gcloud auth print-access-token)
     curl -s https://secretmanager.googleapis.com/v1/projects/$PROJECT_ID/secrets/$KEY_SECRET_NAME/versions/latest:access  \
       --request "GET" --header "authorization: Bearer $TOKEN" --header "content-type: application/json" --silent \
@@ -67,23 +67,23 @@ install_ssl_keys() {
     curl -s https://secretmanager.googleapis.com/v1/projects/$PROJECT_ID/secrets/$FULLCHAIN_SECRET_NAME/versions/latest:access  \
       --request "GET" --header "authorization: Bearer $TOKEN" --header "content-type: application/json" --silent \
       | jq -r ".payload.data" | base64 --decode | sudo tee /etc/ssl/$HOSTNAME.$DOMAIN.fullchain.pem > /dev/null
-    sudo chmod 400 /etc/ssl/$HOSTNAME.$DOMAIN.key.pem /etc/ssl/$HOSTNAME.$DOMAIN.fullchain.pem
+    chmod 400 /etc/ssl/$HOSTNAME.$DOMAIN.key.pem /etc/ssl/$HOSTNAME.$DOMAIN.fullchain.pem
     echo SETUP: Retrieved SSL certificates
 }
 
 install_jitsi_debian() {
-    sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install extrepo
-    sudo extrepo enable prosody
-    sudo extrepo enable jitsi-stable
-    sudo apt-get update  
-    sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install apt-transport-https nginx-full prosody openjdk-11-jre debconf-utils
-    sudo hostnamectl set-hostname $HOSTNAME.$DOMAIN
-    sudo cat <<EOF | sudo tee -a /etc/systemd/system.conf > /dev/null
+    DEBIAN_FRONTEND=noninteractive apt-get -qq install extrepo
+    extrepo enable prosody
+    extrepo enable jitsi-stable
+    apt-get update  
+    DEBIAN_FRONTEND=noninteractive apt-get -qq install apt-transport-https nginx-full prosody openjdk-11-jre debconf-utils
+    hostnamectl set-hostname $HOSTNAME.$DOMAIN
+    cat <<EOF | sudo tee -a /etc/systemd/system.conf > /dev/null
 DefaultTasksMax=65535
 DefaultLimitNPROC=65000
 EOF
-    sudo systemctl daemon-reload
-    cat <<EOF | sudo debconf-set-selections
+    systemctl daemon-reload
+    cat <<EOF | debconf-set-selections
 # The domain of the current installation (e.g. meet.jitsi.com):
 jitsi-videobridge2	jitsi-videobridge/jvb-hostname	string	$HOSTNAME.$DOMAIN
 jitsi-meet-turnserver	jitsi-videobridge/jvb-hostname	string	$HOSTNAME.$DOMAIN
@@ -104,26 +104,26 @@ jitsi-meet-web-config	jitsi-meet/jaas-choice	boolean	false
 EOF
 
     # jitsi-meet installation
-    sudo apt-get install -y jitsi-meet
+    DEBIAN_FRONTEND=noninteractive apt-get install -y jitsi-meet
 }
 
 install_jitsi_docker() {
     # Get Docker and docker-compose
     # get docker signing keys
-    curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
     echo SETUP: Added Docker signing keys 
     # add docker package repository
     echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
     echo SETUP: Added Docker package repository 
     # update packages
-    sudo apt-get update
+    apt-get update
     echo SETUP: Updated Docker package info
     # install docker packages
-    sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install docker-ce docker-ce-cli containerd.io docker-compose
+    DEBIAN_FRONTEND=noninteractive apt-get -qq install docker-ce docker-ce-cli containerd.io docker-compose
     echo SETUP: Installed Docker packages
 
     # Add jitsi user to docker group
-    sudo usermod -aG docker $JITSI_USER
+    usermod -aG docker $JITSI_USER
 
     # Get jitsi-docker from GitHub Releases
     LATEST_JITSI_DOCKER=$(curl -s https://api.github.com/repos/jitsi/docker-jitsi-meet/tags | grep "tarball_url" | grep -Eo 'https://[^\"]*'| head -1)
@@ -146,17 +146,22 @@ install_jitsi_docker() {
     sed -i -e "1,/prosody:/ s%volumes:%volumes:\n            - /etc/ssl/$HOSTNAME.$DOMAIN.fullchain.pem:/config/keys/cert.crt\n            - /etc/ssl/$HOSTNAME.$DOMAIN.key.pem:/config/keys/cert.key%" docker-compose.yml
     echo SETUP: Configured Jitsi
     # make dirs for config files
-    sudo mkdir -p $JITSI_DIR/config/{web,transcripts,prosody/config,prosody/prosody-plugins-custom,jicofo,jvb,jigasi,jibri}
-    sudo chown -R $JITSI_GROUP:$JITSI_USER $JITSI_DIR/config
+    mkdir -p $JITSI_DIR/config/{web,transcripts,prosody/config,prosody/prosody-plugins-custom,jicofo,jvb,jigasi,jibri}
+    chown -R $JITSI_GROUP:$JITSI_USER $JITSI_DIR/config
 
     # start Jitsi
     echo SETUP: Launching Jitsi
-    sudo docker-compose up -d
+    docker-compose up -d
 }
 
 install_ops_agent
 install_ssl_keys
 install_jitsi_debian
+
+systemctl restart prosody
+systemctl restart jicofo
+systemctl restart jitsi-videobridge2
+systemctl restart nginx
 
 date
 echo SETUP: Done.
