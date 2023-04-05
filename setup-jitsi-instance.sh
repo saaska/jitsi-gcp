@@ -25,7 +25,7 @@ echo SETUP: Adding user and group...
 groupadd -r $JITSI_GROUP && useradd -r -s /bin/false -g $JITSI_GROUP $JITSI_USER
 
 echo SETUP: Updating all apt packages...
-apt-get update 
+apt-get update
 echo SETUP: Updated apt packages
 
 # Install pip3 for python dependencies
@@ -43,8 +43,8 @@ echo SETUP: Ran DNS Update Script
 
 # Configure cron to run the DNS update script at startup
 cp ./gcp-renew-dns.py /usr/local/bin
-if ! grep -e "@reboot python3 /usr/local/bin/gcp-renew-dns.py" /etc/crontab; then
-    echo '@reboot python3 /usr/local/bin/gcp-renew-dns.py &'>> /etc/crontab 
+if ! grep -e '@reboot         root    sleep 10; date >> /var/log/renewdns.log; /usr/bin/python3 /usr/local/bin/gcp-renew-dns.py >> /var/log/renewdns.log &' /etc/crontab; then
+    echo '@reboot         root    sleep 10; date >> /var/log/renewdns.log; /usr/bin/python3 /usr/local/bin/gcp-renew-dns.py >> /var/log/renewdns.log &'>> /etc/crontab
 fi
 echo SETUP: Cron DNS update setup step complete
 
