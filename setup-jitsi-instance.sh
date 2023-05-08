@@ -156,12 +156,12 @@ install_jitsi_docker() {
 
 install_ops_agent
 install_ssl_keys
-install_jitsi_debian
+# install_jitsi_debian
 
-systemctl restart prosody
-systemctl restart jicofo
-systemctl restart jitsi-videobridge2
-systemctl restart nginx
+# systemctl restart prosody
+# systemctl restart jicofo
+# systemctl restart jitsi-videobridge2
+# systemctl restart nginx
 
 date
 echo SETUP: Done.
