@@ -77,7 +77,16 @@ ssl_fullchain     = "$SSL_FULLCHAIN"
 preemptible       = "$PREEMPTIBLE"
 EOF
 
+echo Wrote to Terraform variable file vars.tfvars
+
 terraform init
+
+echo "
+** Please make sure the following APIs are enabled for the project $GCP_PROJECT_ID: **
+   - Compute Engine
+   - Cloud DNS
+   - IAM
+"  
 
 echo Trying to import in case resources already exist, please ignore errors...
 
@@ -98,6 +107,6 @@ terraform plan -var-file=vars.tfvars
 
 echo -n "
 Finished.
-Run \"terraform apply -var-file=vars.tfvars\" now to make the above changes? "
+Run \"terraform apply -var-file=vars.tfvars\" now to make the above changes (y/n)? "
 read yn
 if [[ $yn == "y" ]]; then terraform apply -var-file=vars.tfvars; fi
