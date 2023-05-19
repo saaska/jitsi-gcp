@@ -72,7 +72,7 @@ install_ssl_keys() {
     echo SETUP: Retrieved SSL certificates from secrets
 }
 
-generate_le_ssl_keys {
+generate_le_ssl_keys() {
     # Installs nginx to demonstrate webserver control for Let s Encrypt certs
     apt install -qq nginx
 
