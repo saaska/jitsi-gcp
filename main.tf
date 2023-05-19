@@ -53,11 +53,19 @@ variable preemptible {
   description = "Use a Spot (cheaper pre-emptible) instance"
 }
 
-activate_apis = [
-  "compute.googleapis.com",
-  "iam.googleapis.com",
-  "dns.googleapis.com"
-]
+module "project-services" {
+  source  = "terraform-google-modules/project-factory/google//modules/project_services"
+  version = "~> 14.2"
+
+  project_id = var.project_id
+
+  activate_apis = [
+    "compute.googleapis.com",
+    "iam.googleapis.com",
+    "dns.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+  ]
+}
 
 # terraform import google_dns_managed_zone.dns_zone jitsi-demos-377011/saaska-zone
 resource "google_dns_managed_zone" "dns_zone" {

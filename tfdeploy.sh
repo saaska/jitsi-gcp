@@ -84,6 +84,7 @@ terraform init
 echo "
 ** Please make sure the following APIs are enabled for the project $GCP_PROJECT_ID: **
    - Compute Engine
+   - Cloud Resource Manager
    - Cloud DNS
    - IAM
 "  
