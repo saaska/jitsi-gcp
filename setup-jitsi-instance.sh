@@ -26,12 +26,12 @@ echo SETUP: Adding user and group...
 groupadd -r $JITSI_GROUP && useradd -r -s /bin/false -g $JITSI_GROUP $JITSI_USER
 
 echo SETUP: Updating all apt packages...
-apt -qq update
+apt-get -qq update
 echo SETUP: Updated apt packages
 
 # Install pip3 for python dependencies
 echo SETUP: Installing pip...
-apt -qq install python3-pip
+apt-get -qq install python3-pip
 
 echo SETUP: Installing Cloud DNS client package...
 pip3 install google-cloud-dns requests
@@ -39,7 +39,7 @@ pip3 install google-cloud-dns requests
 # Install DNS resolver and GCP Cloud DNS libraries
 echo SETUP: Installed Google Cloud DNS package for Python
 echo SETUP: Running DNS Update Script...
-python3 ./gcp-renew-dns.py
+python3 ./gcp-renew-dns.py >> /var/log/renewdns.log
 echo SETUP: Ran DNS Update Script
 
 # Configure cron to run the DNS update script at startup
@@ -60,7 +60,7 @@ install_ops_agent() {
 
 install_ssl_keys() {
     # Get the SSL keys
-    apt -qq install jq  # install JSON processor for the keys obtained from secrets
+    apt-get -qq install jq  # install JSON processor for the keys obtained from secrets
     TOKEN=$(gcloud auth print-access-token)
     curl -s https://secretmanager.googleapis.com/v1/projects/$PROJECT_ID/secrets/$KEY_SECRET_NAME/versions/latest:access  \
       --request "GET" --header "authorization: Bearer $TOKEN" --header "content-type: application/json" --silent \
@@ -87,10 +87,10 @@ generate_le_ssl_keys() {
 }
 
 install_jitsi_debian() {
-    apt -qq install -y extrepo
+    apt-get -qq install extrepo
     extrepo enable prosody && extrepo enable jitsi-stable
-    apt -qq update  
-    apt -qq install -y apt-transport-https nginx-full prosody openjdk-11-jre debconf-utils
+    apt-get -qq update  
+    apt-get -qq install apt-transport-https nginx-full prosody openjdk-11-jre debconf-utils
     hostnamectl set-hostname $HOSTNAME.$DOMAIN
     printf "DefaultTasksMax=65535\nDefaultLimitNPROC=65000\n" >> /etc/systemd/system.conf
     systemctl daemon-reload
@@ -114,7 +114,7 @@ install_jitsi_docker() {
     echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
     echo SETUP: Added Docker package repository 
     # update packages
-    apt -qq update
+    apt-get -qq update
     echo SETUP: Updated Docker package info
     # install docker packages
     DEBIAN_FRONTEND=noninteractive apt-get -qq install docker-ce docker-ce-cli containerd.io docker-compose
