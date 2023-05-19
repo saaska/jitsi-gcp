@@ -109,6 +109,8 @@ install_jitsi_debian() {
 
     # jitsi-meet installation
     apt-get -y -qq install jitsi-meet
+    rm /etc/nginx/sites-enabled/default
+    systemctl restart nginx
 
     echo SETUP: Installed Prosody and Jitsi
 }
