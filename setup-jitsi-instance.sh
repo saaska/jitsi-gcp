@@ -11,6 +11,8 @@ JITSI_DIR=/usr/share/jitsi
 JITSI_USER=jitsi
 JITSI_GROUP=jitsi
 
+DEBIAN_FRONTEND=noninteractive
+
 # get metadata
 META_URL=http://metadata.google.internal/computeMetadata/v1
 META_HEADER="Metadata-Flavor: Google"
@@ -33,11 +35,11 @@ echo SETUP: Updated apt packages
 echo SETUP: Installing pip...
 apt-get -qq install python3-pip
 
-echo SETUP: Installing Cloud DNS client package...
-pip3 install google-cloud-dns requests
-
 # Install DNS resolver and GCP Cloud DNS libraries
+echo SETUP: Installing Google Cloud DNS package for Python...
+pip3 install google-cloud-dns requests
 echo SETUP: Installed Google Cloud DNS package for Python
+
 echo SETUP: Running DNS Update Script...
 python3 ./gcp-renew-dns.py >> /var/log/renewdns.log
 echo SETUP: Ran DNS Update Script
@@ -53,6 +55,7 @@ mkdir $JITSI_DIR
 
 install_ops_agent() {
     # Install Google Cloud Ops Agent for monitoring
+    echo SETUP: Installing Google Cloud Ops Agent...
     curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
     bash add-google-cloud-ops-agent-repo.sh --also-install
     echo SETUP: Installed Google Cloud Ops Agent
@@ -60,6 +63,7 @@ install_ops_agent() {
 
 install_ssl_keys() {
     # Get the SSL keys
+    echo SETUP: Retrieving SSL certificates from GCP project secrets...
     apt-get -qq install jq  # install JSON processor for the keys obtained from secrets
     TOKEN=$(gcloud auth print-access-token)
     curl -s https://secretmanager.googleapis.com/v1/projects/$PROJECT_ID/secrets/$KEY_SECRET_NAME/versions/latest:access  \
@@ -73,6 +77,7 @@ install_ssl_keys() {
 }
 
 generate_le_ssl_keys() {
+    echo SETUP: Asking for SSL certificates from Let\'s Encrypt...
     # Installs nginx to demonstrate webserver control for Let s Encrypt certs
     apt install -qq nginx
 
@@ -87,10 +92,11 @@ generate_le_ssl_keys() {
 }
 
 install_jitsi_debian() {
-    apt-get -qq install extrepo
+    echo SETUP: Installing Prosody and Jitsi...
+    apt-get -qq install -y extrepo
     extrepo enable prosody && extrepo enable jitsi-stable
     apt-get -qq update  
-    apt-get -qq install apt-transport-https nginx-full prosody openjdk-11-jre debconf-utils
+    apt-get -qq install -y apt-transport-https nginx-full prosody openjdk-11-jre debconf-utils
     hostnamectl set-hostname $HOSTNAME.$DOMAIN
     printf "DefaultTasksMax=65535\nDefaultLimitNPROC=65000\n" >> /etc/systemd/system.conf
     systemctl daemon-reload
@@ -102,7 +108,9 @@ install_jitsi_debian() {
     echo "jitsi-meet jitsi-meet/jaas-choice boolean false" | debconf-set-selections
 
     # jitsi-meet installation
-    DEBIAN_FRONTEND=noninteractive apt install -y jitsi-meet
+    apt -qq install -y jitsi-meet
+
+    echo SETUP: Installed Prosody and Jitsi
 }
 
 install_jitsi_docker() {
@@ -117,7 +125,7 @@ install_jitsi_docker() {
     apt-get -qq update
     echo SETUP: Updated Docker package info
     # install docker packages
-    DEBIAN_FRONTEND=noninteractive apt-get -qq install docker-ce docker-ce-cli containerd.io docker-compose
+    apt-get -qq install -y docker-ce docker-ce-cli containerd.io docker-compose
     echo SETUP: Installed Docker packages
 
     # Add jitsi user to docker group
