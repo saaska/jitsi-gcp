@@ -11,7 +11,7 @@ JITSI_DIR=/usr/share/jitsi
 JITSI_USER=jitsi
 JITSI_GROUP=jitsi
 
-DEBIAN_FRONTEND=noninteractive
+export DEBIAN_FRONTEND=noninteractive
 
 # get metadata
 META_URL=http://metadata.google.internal/computeMetadata/v1
@@ -33,7 +33,7 @@ echo SETUP: Updated apt packages
 
 # Install pip3 for python dependencies
 echo SETUP: Installing pip...
-apt-get -qq install python3-pip
+apt-get -y -qq install python3-pip
 
 # Install DNS resolver and GCP Cloud DNS libraries
 echo SETUP: Installing Google Cloud DNS package for Python...
@@ -64,7 +64,7 @@ install_ops_agent() {
 install_ssl_keys() {
     # Get the SSL keys
     echo SETUP: Retrieving SSL certificates from GCP project secrets...
-    apt-get -qq install jq  # install JSON processor for the keys obtained from secrets
+    apt-get -y -qq install jq  # install JSON processor for the keys obtained from secrets
     TOKEN=$(gcloud auth print-access-token)
     curl -s https://secretmanager.googleapis.com/v1/projects/$PROJECT_ID/secrets/$KEY_SECRET_NAME/versions/latest:access  \
       --request "GET" --header "authorization: Bearer $TOKEN" --header "content-type: application/json" --silent \
@@ -79,10 +79,10 @@ install_ssl_keys() {
 generate_le_ssl_keys() {
     echo SETUP: Asking for SSL certificates from Let\'s Encrypt...
     # Installs nginx to demonstrate webserver control for Let s Encrypt certs
-    apt install -qq nginx
+    apt-get -y -qq install nginx
 
     # Installs Let s Encrypt certbot and uses it to generates SSL keys
-    apt install -y snapd
+    apt-get -y -qq install snapd
     snap install core
     snap install --classic certbot
     ln -s /snap/bin/certbot /usr/bin/certbot
@@ -93,10 +93,10 @@ generate_le_ssl_keys() {
 
 install_jitsi_debian() {
     echo SETUP: Installing Prosody and Jitsi...
-    apt-get -qq install -y extrepo
+    apt-get -y -qq install extrepo
     extrepo enable prosody && extrepo enable jitsi-stable
     apt-get -qq update  
-    apt-get -qq install -y apt-transport-https nginx-full prosody openjdk-11-jre debconf-utils
+    apt-get -y -qq install apt-transport-https nginx-full prosody openjdk-11-jre debconf-utils
     hostnamectl set-hostname $HOSTNAME.$DOMAIN
     printf "DefaultTasksMax=65535\nDefaultLimitNPROC=65000\n" >> /etc/systemd/system.conf
     systemctl daemon-reload
@@ -108,7 +108,7 @@ install_jitsi_debian() {
     echo "jitsi-meet jitsi-meet/jaas-choice boolean false" | debconf-set-selections
 
     # jitsi-meet installation
-    apt -qq install -y jitsi-meet
+    apt-get -y -qq install jitsi-meet
 
     echo SETUP: Installed Prosody and Jitsi
 }
@@ -125,7 +125,7 @@ install_jitsi_docker() {
     apt-get -qq update
     echo SETUP: Updated Docker package info
     # install docker packages
-    apt-get -qq install -y docker-ce docker-ce-cli containerd.io docker-compose
+    apt-get -y -qq install docker-ce docker-ce-cli containerd.io docker-compose
     echo SETUP: Installed Docker packages
 
     # Add jitsi user to docker group
