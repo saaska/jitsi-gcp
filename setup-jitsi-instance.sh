@@ -164,9 +164,9 @@ install_jitsi_docker() {
 
 install_ops_agent
 if [ -n "$LE_EMAIL" ]; then
-  install_ssl_keys
+  generate_le_ssl_keys # have email - means get from LetsEncrypt
 else
-  generate_le_ssl_keys
+  install_ssl_keys # otherwise, get key and cert chain from secrets
 fi  
 
 install_jitsi_debian
