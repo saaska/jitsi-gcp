@@ -163,7 +163,7 @@ install_jitsi_docker() {
 }
 
 install_ops_agent
-if [ -z LE_EMAIL ]; then
+if [ -n "$LE_EMAIL" ]; then
   install_ssl_keys
 else
   generate_le_ssl_keys
