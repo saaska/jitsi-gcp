@@ -187,6 +187,7 @@ resource "google_compute_instance" "jitsi_instance" {
     auto_delete = true
     device_name = "${var.hostname}"
     initialize_params {
+      size = 15
       image = "debian-cloud/debian-11"
     }
   }
