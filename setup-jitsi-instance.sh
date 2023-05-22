@@ -102,10 +102,17 @@ install_jitsi_debian() {
     systemctl daemon-reload
     # provide answers for non-interactive install of Jitsi Meet
     echo "jitsi-videobridge jitsi-videobridge/jvb-hostname string $HOSTNAME.$DOMAIN" | debconf-set-selections
-    echo "jitsi-meet jitsi-meet/cert-choice select I want to use my own certificate" | debconf-set-selections
-    echo "jitsi-meet jitsi-meet/cert-path-key string /etc/letsencrypt/live/$HOSTNAME.$DOMAIN/privkey.pem" | debconf-set-selections
-    echo "jitsi-meet jitsi-meet/cert-path-crt string /etc/letsencrypt/live/$HOSTNAME.$DOMAIN/fullchain.pem" | debconf-set-selections
     echo "jitsi-meet jitsi-meet/jaas-choice boolean false" | debconf-set-selections
+        echo "jitsi-meet jitsi-meet/cert-choice select I want to use my own certificate" | debconf-set-selections
+    if [ -n "$LE_EMAIL" ]; then
+      KEYPATH=/etc/letsencrypt/live/$HOSTNAME.$DOMAIN/privkey.pem # have email - means get from LetsEncrypt
+      CERTPATH=/etc/letsencrypt/live/$HOSTNAME.$DOMAIN/fullchain.pem
+    else
+      KEYPATH=/etc/ssl/$HOSTNAME.$DOMAIN.privkey.pem # no email means get key and cert chain from secrets``
+      CERTPATH=/etc/ssl/$HOSTNAME.$DOMAIN.fullchain.pem
+    fi  
+    echo "jitsi-meet jitsi-meet/cert-path-key string $KEYPATH" | debconf-set-selections
+    echo "jitsi-meet jitsi-meet/cert-path-crt string $CERTPATH" | debconf-set-selections
 
     # jitsi-meet installation
     apt-get -y -qq install jitsi-meet
@@ -166,7 +173,7 @@ install_ops_agent
 if [ -n "$LE_EMAIL" ]; then
   generate_le_ssl_keys # have email - means get from LetsEncrypt
 else
-  install_ssl_keys # otherwise, get key and cert chain from secrets
+  install_ssl_keys # no email means get key and cert chain from secrets``
 fi  
 
 install_jitsi_debian
