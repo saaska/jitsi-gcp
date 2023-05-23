@@ -103,7 +103,7 @@ install_jitsi_debian() {
     # provide answers for non-interactive install of Jitsi Meet
     echo "jitsi-videobridge jitsi-videobridge/jvb-hostname string $HOSTNAME.$DOMAIN" | debconf-set-selections
     echo "jitsi-meet jitsi-meet/jaas-choice boolean false" | debconf-set-selections
-        echo "jitsi-meet jitsi-meet/cert-choice select I want to use my own certificate" | debconf-set-selections
+    echo "jitsi-meet jitsi-meet/cert-choice select I want to use my own certificate" | debconf-set-selections
     if [ -n "$LE_EMAIL" ]; then
       KEYPATH=/etc/letsencrypt/live/$HOSTNAME.$DOMAIN/privkey.pem # have email - means get from LetsEncrypt
       CERTPATH=/etc/letsencrypt/live/$HOSTNAME.$DOMAIN/fullchain.pem
@@ -176,7 +176,7 @@ else
   install_ssl_keys # no email means get key and cert chain from secrets``
 fi  
 
-install_jitsi_debian
+# install_jitsi_debian
 
 # systemctl restart prosody
 # systemctl restart jicofo
