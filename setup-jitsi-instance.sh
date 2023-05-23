@@ -117,7 +117,7 @@ install_jitsi_debian() {
     # jitsi-meet installation
     apt-get -y -qq install jitsi-meet
     rm /etc/nginx/sites-enabled/default
-    systemctl restart nginx
+    systemctl restart jicofo jitsi-videobridge2 prosody nginx
 
     echo SETUP: Installed Prosody and Jitsi
 }
@@ -178,11 +178,5 @@ fi
 
 install_jitsi_debian
 
-# systemctl restart prosody
-# systemctl restart jicofo
-# systemctl restart jitsi-videobridge2
-# systemctl restart nginx
-
-date
-echo SETUP: Done.
+date && echo SETUP: Done.
 } >> /var/log/setup-jitsi.log 2>&1
