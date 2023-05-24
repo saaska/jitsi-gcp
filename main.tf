@@ -198,7 +198,7 @@ resource "google_compute_instance" "jitsi_instance" {
     hostname          = var.hostname
     zone              = var.dns_zone
     letsencrypt_email = var.letsencrypt_email
-    startup-script    = "#!/bin/bash\nsudo apt-get update\nsudo apt-get install -y git\ngit clone https://github.com/saaska/jitsi-gcp /tmp/jitsi-gcp\ncd /tmp/jitsi-gcp\nbash ./setup-jitsi-instance.sh"
+    startup-script    = "#!/bin/bash\nsudo apt-get update\nsudo apt-get install -y git\ngit clone https://github.com/saaska/jitsi-gcp /tmp/jitsi-gcp\ncd /tmp/jitsi-gcp\ngit checkout utils\nbash ./setup-jitsi-instance.sh"
   }
   network_interface {
     access_config {

@@ -5,7 +5,8 @@ if grep -q "SETUP: Done" "/var/log/setup-jitsi.log"; then
 fi
 
 {
-echo SETUP: Working in $PWD as $(whoami)
+SRCDIR=$(pwd)  
+echo SETUP: Working in $SRCDIR as $(whoami)
 
 JITSI_DIR=/usr/share/jitsi
 JITSI_USER=jitsi
@@ -169,14 +170,48 @@ install_jitsi_docker() {
     docker-compose up -d
 }
 
+configure_websockets() {
+    # add websockets to Prosody config
+    sed -i -e "/^VirtualHost \"$HOSTNAME.$DOMAIN\"/i consider_websocket_secure = true" \
+           -e "/^VirtualHost \"$HOSTNAME.$DOMAIN\"/,/^Component/ {
+                  /    modules_enabled = {/a \        \"websocket\"\;\n        \"smacks\"\;" \
+              -e '/main_muc = /a\    cross_domain_websocket = true' \
+           -e '}' prosody/conf.avail/$HOSTNAME.$DOMAIN.cfg.lua
+
+    # add websockets to nginx config
+    sed -i "/ location = \/xmpp-websocket {/a\        add_header 'x-jitsi-shard' 'shard1';\n        add_header 'x-jitsi-region' 'europe';\n        add_header 'Access-Control-Expose-Headers' 'X-Jitsi-Shard, X-Jitsi-Region';" nginx/sites-available/$HOSTNAME.$DOMAIN.conf
+
+    # add websockets url to the Jitsi JS
+    sed -i "s#// websocket: 'wss://#websocket: 'wss://#" jitsi/meet/demo.saaska.me-config.js
+
+    # restart the servers
+    systemctl restart jicofo jitsi-videobridge2 prosody nginx
+}
+
+configure_addons() {
+  # create a git repo with Jitsi settings in /etc
+  cd /etc
+  cp $SRCDIR/etc-gitignore /etc/.gitignore
+  git init
+  git config user.name 'ubuntu'
+  git config user.email '26275111+saaska@users.noreply.github.com'
+  git add .
+  git commit -m init
+
+  # add history completion
+  cp $SRCDIR/home-inputrc /root/.inputrc  
+  cp $SRCDIR/home-inputrc /etc/skel/.inputrc  
+}
+
 install_ops_agent
 if [ -n "$LE_EMAIL" ]; then
   generate_le_ssl_keys # have email - means get from LetsEncrypt
 else
   install_ssl_keys # no email means get key and cert chain from secrets``
 fi  
-
 install_jitsi_debian
+configure_addons
+configure_websockets
 
 date && echo SETUP: Done.
 } >> /var/log/setup-jitsi.log 2>&1
