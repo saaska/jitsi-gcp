@@ -182,7 +182,7 @@ configure_websockets() {
     sed -i "/ location = \/xmpp-websocket {/a\        add_header 'x-jitsi-shard' 'shard1';\n        add_header 'x-jitsi-region' 'europe';\n        add_header 'Access-Control-Expose-Headers' 'X-Jitsi-Shard, X-Jitsi-Region';" nginx/sites-available/$HOSTNAME.$DOMAIN.conf
 
     # add websockets url to the Jitsi JS
-    sed -i "s#// websocket: 'wss://#websocket: 'wss://#" jitsi/meet/demo.saaska.me-config.js
+    sed -i "s#// websocket: 'wss://#websocket: 'wss://#" jitsi/meet/$HOSTNAME.$DOMAIN-config.js
 
     # restart the servers
     systemctl restart jicofo jitsi-videobridge2 prosody nginx
